@@ -1,19 +1,29 @@
+import * as cdk from 'aws-cdk-lib';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as apigw from 'aws-cdk-lib/aws-apigateway';
 import { Duration, Stack, StackProps } from 'aws-cdk-lib';
-import * as sns from 'aws-cdk-lib/aws-sns';
-import * as subs from 'aws-cdk-lib/aws-sns-subscriptions';
-import * as sqs from 'aws-cdk-lib/aws-sqs';
 import { Construct } from 'constructs';
+import { Code, Runtime } from 'aws-cdk-lib/aws-lambda';
+import { resolve } from 'path';
 
 export class GitHubStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
-    const queue = new sqs.Queue(this, 'GitHubQueue', {
-      visibilityTimeout: Duration.seconds(300)
+    console.log('resolve -> ', resolve(__dirname, './../lambdas'));
+
+    const helloHandler = new lambda.Function(this, 'helloHandler', {
+      runtime: Runtime.NODEJS_16_X,
+      code: Code.fromAsset(resolve(__dirname, './../lambdas')),
+      handler: 'index.handler'
     });
 
-    const topic = new sns.Topic(this, 'GitHubTopic');
+    const apigwateway = new apigw.LambdaRestApi(this, 'HelloAPIGateway', {
+      handler: helloHandler
+    });
 
-    topic.addSubscription(new subs.SqsSubscription(queue));
+    
+
+
   }
 }
